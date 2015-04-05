@@ -1,0 +1,6 @@
+package rock_thruster.msgs;
+
+message ThrusterInput
+{
+    optional double     frequency = 1 [default = 0];
+}
