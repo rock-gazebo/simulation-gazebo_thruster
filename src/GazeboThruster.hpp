@@ -21,6 +21,7 @@ namespace gazebo_thruster
             gazebo::physics::LinkPtr link;
             std::vector<gazebo::event::ConnectionPtr> eventHandler;
             gazebo::transport::NodePtr node;
+            gazebo::transport::SubscriberPtr thruster_subscriber;
 
 		public:
             GazeboThruster();

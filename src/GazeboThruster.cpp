@@ -3,8 +3,7 @@
 using namespace gazebo;
 using namespace gazebo_thruster;
 
-
-GazeboThruster::GazeboThruster(): thruster_input(0) 
+GazeboThruster::GazeboThruster(): thruster_input(0.0)
 {
 }
 
@@ -13,13 +12,14 @@ GazeboThruster::~GazeboThruster()
     node->Fini();
 }
 
-
 void GazeboThruster::Load(physics::ModelPtr _model,sdf::ElementPtr _sdf)
 {
     gzmsg << "GazeboThruster: Loading thruster." << std::endl;
 
     gazebo::physics::ModelPtr model = _model;
-    link = model->GetLink("link_name");
+    link = model->GetLink("underwater_thruster_body");
+    if(!link)
+        gzthrow(" GazeboThruster: thruster link name is different from underwater_thruster_body");
 
     eventHandler.push_back(
             event::Events::ConnectWorldUpdateBegin(
@@ -28,7 +28,7 @@ void GazeboThruster::Load(physics::ModelPtr _model,sdf::ElementPtr _sdf)
     // Initialize communication node
     node = transport::NodePtr(new transport::Node());
     node->Init();
-    transport::SubscriberPtr sub = node->Subscribe(model->GetName(),
+    thruster_subscriber = node->Subscribe("~/" + model->GetName(),
             &GazeboThruster::readInput,this);
 }
 
