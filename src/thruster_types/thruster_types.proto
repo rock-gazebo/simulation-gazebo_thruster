@@ -1,19 +1,13 @@
 package rock_thruster.msgs;
 
-message Raw
+message Thruster
 {
-    optional string         name = 1;
-    optional double         raw = 2;
-}
-
-message Effort
-{
-    optional string         name = 1;
-    optional double         effort = 2;
+    required string     name = 1;
+    optional double     raw = 2;
+    optional double     effort = 3;
 }
 
 message Joints
 {
-    repeated Raw            raw = 1;
-    repeated Effort         effort = 2;
+    repeated Thruster   thruster = 1;
 }

@@ -62,31 +62,24 @@ void GazeboThruster::initNode()
 
 void GazeboThruster::readInput(JointsMSG& jointsMSG)
 {
-    // Read buffers and update joints data
-    for(int i = 0; i < jointsMSG->raw_size(); ++i)
+    // Read buffer and update joints data
+    for(int i = 0; i < jointsMSG->thruster_size(); ++i)
     {
-        const rock_thruster::msgs::Raw& jointRaw = jointsMSG->raw(i);
-        for(GazeboJoint::iterator joint = thrusterInput.begin();
-                joint != thrusterInput.end(); ++joint)
+        const rock_thruster::msgs::Thruster& thruster = jointsMSG->thruster(i);
+        GazeboJoint::iterator joint = thrusterInput.find( thruster.name() );
+        if( joint != thrusterInput.end() )
         {
-            if(joint->first == jointRaw.name() )
-            {
-                joint->second = thrusterMathModel( jointRaw.raw() );
-            }
-        }
-    }
+            if( thruster.has_raw() )
+                joint->second = thrusterMathModel( thruster.raw() );
 
-    for( int i = 0; i < jointsMSG->effort_size(); ++i)
-    {
-        const rock_thruster::msgs::Effort& jointEffort = jointsMSG->effort(i);
-        for(GazeboJoint::iterator joint = thrusterInput.begin();
-                joint != thrusterInput.end(); ++joint)
-        {
-            if(joint->first == jointEffort.name() )
-                joint->second = jointEffort.effort();
+            if( thruster.has_effort() )
+                joint->second = thruster.effort();
+        }else{
+            gzmsg << "GazeboThruster: thruster "<< thruster.name() << " not found." << std::endl;
         }
     }
 }
+
 
 double GazeboThruster::thrusterMathModel(double input)
 {
