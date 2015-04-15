@@ -7,7 +7,7 @@ message Thruster
     optional double     effort = 3;
 }
 
-message Joints
+message Thrusters
 {
-    repeated Thruster   thruster = 1;
+    repeated Thruster   thrusters = 1;
 }

@@ -18,7 +18,7 @@ void GazeboThruster::Load(physics::ModelPtr _model,sdf::ElementPtr _sdf)
     gzmsg << "GazeboThruster: loading thrusters from model: " << model->GetName() << std::endl;
 
     loadLinks();
-    initNode();
+    initComNode();
 
     eventHandler.push_back(
             event::Events::ConnectWorldUpdateBegin(
@@ -40,40 +40,40 @@ void GazeboThruster::loadLinks()
             linkName.erase( found - 2 );
             gzmsg <<"GazeboThruster: JointState element name in ROCK joint input port must match the link name: "
                     << linkName << std::endl;
-            thrusterInput.insert( std::make_pair( linkName, 0.0 ) );
+            thrusterOutput.insert( std::make_pair( linkName, 0.0 ) );
         }
     }
-    if(thrusterInput.empty())
+    if(thrusterOutput.empty())
         gzthrow("GazeboThruster: thruster link name underwater_thruster_body not found.");
 }
 
 
-void GazeboThruster::initNode()
+void GazeboThruster::initComNode()
 {
     // Initialize communication node and subscribe to gazebo topic
     node = transport::NodePtr(new transport::Node());
     node->Init();
-    std::string topicName = model->GetName() + "/thruster";
+    std::string topicName = model->GetName() + "/thrusters";
     thrusterSubscriber = node->Subscribe("~/" + topicName,&GazeboThruster::readInput,this);
     gzmsg <<"GazeboThruster: create gazebo topic /gazebo/"+ model->GetWorld()->GetName()
             + "/" + topicName << std::endl;
 }
 
 
-void GazeboThruster::readInput(JointsMSG& jointsMSG)
+void GazeboThruster::readInput(ThrustersMSG& thrustersMSG)
 {
-    // Read buffer and update joints data
-    for(int i = 0; i < jointsMSG->thruster_size(); ++i)
+    // Read buffer and update output data
+    for(int i = 0; i < thrustersMSG->thrusters_size(); ++i)
     {
-        const rock_thruster::msgs::Thruster& thruster = jointsMSG->thruster(i);
-        GazeboJoint::iterator joint = thrusterInput.find( thruster.name() );
-        if( joint != thrusterInput.end() )
+        const rock_thruster::msgs::Thruster& thruster = thrustersMSG->thrusters(i);
+        ThrusterOutput::iterator output = thrusterOutput.find( thruster.name() );
+        if( output != thrusterOutput.end() )
         {
             if( thruster.has_raw() )
-                joint->second = thrusterMathModel( thruster.raw() );
+                output->second = thrusterMathModel( thruster.raw() );
 
             if( thruster.has_effort() )
-                joint->second = thruster.effort();
+                output->second = thruster.effort();
         }else{
             gzmsg << "GazeboThruster: thruster "<< thruster.name() << " not found." << std::endl;
         }
@@ -91,10 +91,10 @@ double GazeboThruster::thrusterMathModel(double input)
 
 void GazeboThruster::updateBegin(common::UpdateInfo const& info)
 {
-    for(GazeboJoint::iterator input = thrusterInput.begin();
-            input != thrusterInput.end(); ++input)
+    for(ThrusterOutput::iterator output = thrusterOutput.begin();
+            output != thrusterOutput.end(); ++output)
     {
-        physics::LinkPtr link = model->GetLink(input->first + "::underwater_thruster_body");
-        link->AddForce( math::Vector3(input->second,0,0) );
+        physics::LinkPtr link = model->GetLink(output->first + "::underwater_thruster_body");
+        link->AddForce( math::Vector3(output->second,0,0) );
     }
 }

@@ -17,22 +17,22 @@ namespace gazebo_thruster
             ~GazeboThruster();
 			virtual void Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf);
 
-            typedef const boost::shared_ptr<const rock_thruster::msgs::Joints> JointsMSG;
-            void readInput(JointsMSG &jointsMSG);
+            typedef const boost::shared_ptr<const rock_thruster::msgs::Thrusters> ThrustersMSG;
+            void readInput(ThrustersMSG &thrustersMSG);
 
         private:
             void updateBegin(gazebo::common::UpdateInfo const& info);
             double thrusterMathModel(double input);
             void loadLinks();
-            void initNode();
+            void initComNode();
 
             std::vector<gazebo::event::ConnectionPtr> eventHandler;
             gazebo::transport::NodePtr node;
             gazebo::transport::SubscriberPtr thrusterSubscriber;
-
-            typedef std::map<std::string,double> GazeboJoint;
-            GazeboJoint thrusterInput;
             gazebo::physics::ModelPtr model;
+
+            typedef std::map<std::string,double> ThrusterOutput;
+            ThrusterOutput thrusterOutput;
 	};
     GZ_REGISTER_MODEL_PLUGIN(GazeboThruster)
 } 
