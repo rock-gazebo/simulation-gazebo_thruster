@@ -1,6 +1,13 @@
 package rock_thruster.msgs;
 
-message ThrusterInput
+message Thruster
 {
-    optional double     frequency = 1 [default = 0];
+    required string     name = 1;
+    optional double     raw = 2;
+    optional double     effort = 3;
+}
+
+message Thrusters
+{
+    repeated Thruster   thrusters = 1;
 }
