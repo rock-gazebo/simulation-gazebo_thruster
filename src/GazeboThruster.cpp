@@ -28,23 +28,26 @@ void GazeboThruster::Load(physics::ModelPtr _model,sdf::ElementPtr _sdf)
 
 void GazeboThruster::loadLinks()
 {
-    // Get all links and look for "underwater_thruster_body" in each one of them
+    // Get all links and look for "thruster" in their names
     physics::Link_V links = model->GetLinks();
     for(physics::Link_V::iterator link = links.begin(); link != links.end(); ++link)
     {
         std::string linkName = (*link)->GetName();
-        std::size_t found = linkName.find("underwater_thruster_body");
-        if(found != std::string::npos )
+        std::size_t found = linkName.find("thruster::");
+        if( found != std::string::npos )
         {
             gzmsg <<"GazeboThruster: found link: " << linkName << std::endl;
-            linkName.erase( found - 2 );
             gzmsg <<"GazeboThruster: JointState element name in ROCK joint input port must match the link name: "
                     << linkName << std::endl;
             thrusterOutput.insert( std::make_pair( linkName, 0.0 ) );
         }
     }
     if(thrusterOutput.empty())
-        gzthrow("GazeboThruster: thruster link name underwater_thruster_body not found.");
+    {
+        std::string msg = "GazeboThruster: no thruster link was found in gazebo model: "
+                + model->GetName();
+        gzthrow(msg);
+    }
 }
 
 
@@ -94,7 +97,7 @@ void GazeboThruster::updateBegin(common::UpdateInfo const& info)
     for(ThrusterOutput::iterator output = thrusterOutput.begin();
             output != thrusterOutput.end(); ++output)
     {
-        physics::LinkPtr link = model->GetLink(output->first + "::underwater_thruster_body");
+        physics::LinkPtr link = model->GetLink( output->first );
         link->AddForce( math::Vector3(output->second,0,0) );
     }
 }
