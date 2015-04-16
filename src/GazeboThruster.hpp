@@ -6,7 +6,7 @@
 #include <gazebo/transport/transport.hh>
 #include <gazebo/msgs/msgs.hh>
 
-#include "thruster_types.pb.h"
+#include "msgs.pb.h"
 
 namespace gazebo_thruster
 {
