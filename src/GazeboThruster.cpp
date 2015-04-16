@@ -68,7 +68,7 @@ void GazeboThruster::readInput(ThrustersMSG& thrustersMSG)
     // Read buffer and update output data
     for(int i = 0; i < thrustersMSG->thrusters_size(); ++i)
     {
-        const rock_thruster::msgs::Thruster& thruster = thrustersMSG->thrusters(i);
+        const gazebo_thruster::msgs::Thruster& thruster = thrustersMSG->thrusters(i);
         ThrusterOutput::iterator output = thrusterOutput.find( thruster.name() );
         if( output != thrusterOutput.end() )
         {
