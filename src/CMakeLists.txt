@@ -12,3 +12,6 @@ rock_library(gazebo_thruster
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/msgs.pb.h
     DESTINATION include/${PROJECT_NAME})
+
+install(FILES msgs.proto
+    DESTINATION include/${PROJECT_NAME}/proto)
