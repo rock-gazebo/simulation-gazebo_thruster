@@ -6,9 +6,9 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 rock_library(gazebo_thruster
     SOURCES GazeboThruster.cpp ${msgs_SRCS}
-    HEADERS ${msgs_HDR}
+    HEADERS GazeboThruster.hpp
     DEPS_PLAIN Boost
     DEPS_PKGCONFIG gazebo sdformat protobuf)
 
-install(FILES msgs.proto
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/msgs.pb.h
     DESTINATION include/${PROJECT_NAME})
