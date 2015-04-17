@@ -1,4 +1,4 @@
-package rock_thruster.msgs;
+package gazebo_thruster.msgs;
 
 message Thruster
 {
