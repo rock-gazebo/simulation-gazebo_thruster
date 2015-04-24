@@ -98,6 +98,7 @@ void GazeboThruster::updateBegin(common::UpdateInfo const& info)
             output != thrusterOutput.end(); ++output)
     {
         physics::LinkPtr link = model->GetLink( output->first );
-        link->AddForce( math::Vector3(output->second,0,0) );
+        link->AddRelativeForce( math::Vector3(output->second,0,0) );
     }
 }
+
