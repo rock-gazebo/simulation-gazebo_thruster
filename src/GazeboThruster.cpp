@@ -70,7 +70,7 @@ void GazeboThruster::loadThrusters()
                     thruster.maxThrust = getParameter<double>(thrusterElement,"max_thrust","N",10);
                     thruster.effort = 0.0;
                     thrusters.push_back(thruster);
-                    thrusterElement = pluginElement->GetNextElement("thruster");
+                    thrusterElement = thrusterElement->GetNextElement("thruster");
                 }
             }else
             {
