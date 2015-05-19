@@ -33,6 +33,8 @@ namespace gazebo_thruster
         void loadThrusters();
         void initComNode();
         void checkThrusters();
+        void checkThrustLimits(std::vector<Thruster>::iterator thruster);
+        double updateEffort(gazebo_thruster::msgs::Thruster thrusterCMD);
 
         std::vector<gazebo::event::ConnectionPtr> eventHandler;
         gazebo::transport::NodePtr node;

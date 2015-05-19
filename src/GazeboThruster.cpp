@@ -66,8 +66,8 @@ void GazeboThruster::loadThrusters()
                     Thruster thruster;
                     thruster.name = thrusterElement->Get<string>("name");
                     gzmsg << "GazeboThruster: thruster name: " << thruster.name << endl;
-                    thruster.minThrust = getParameter<double>(thrusterElement,"min_thrust","N",-10);
-                    thruster.maxThrust = getParameter<double>(thrusterElement,"max_thrust","N",10);
+                    thruster.minThrust = getParameter<double>(thrusterElement,"min_thrust","N",-100);
+                    thruster.maxThrust = getParameter<double>(thrusterElement,"max_thrust","N",100);
                     thruster.effort = 0.0;
                     thrusters.push_back(thruster);
                     thrusterElement = thrusterElement->GetNextElement("thruster");
@@ -82,6 +82,7 @@ void GazeboThruster::loadThrusters()
         }
     }
 }
+
 
 void GazeboThruster::checkThrusters()
 {
@@ -129,15 +130,44 @@ void GazeboThruster::readInput(ThrustersMSG& thrustersMSG)
             if(thrusterCMD.name() == thruster->name)
             {
                 thrusterFound = true;
-                if( thrusterCMD.has_raw() )
-                    thruster->effort = thrusterMathModel( thrusterCMD.raw() );
-
-                if( thrusterCMD.has_effort() )
-                    thruster->effort = thrusterCMD.effort();
+                thruster->effort = updateEffort(thrusterCMD);
+                checkThrustLimits(thruster);
             }
         }
         if(!thrusterFound)
             gzmsg << "GazeboThruster: incoming thruster name: "<< thrusterCMD.name() << ", not found." << endl;
+    }
+}
+
+
+double GazeboThruster::updateEffort(gazebo_thruster::msgs::Thruster thrusterCMD)
+{
+    double effort;
+
+    if( thrusterCMD.has_raw() )
+        effort = thrusterMathModel( thrusterCMD.raw() );
+
+    if( thrusterCMD.has_effort() )
+        effort = thrusterCMD.effort();
+
+    return effort;
+}
+
+
+void GazeboThruster::checkThrustLimits(vector<Thruster>::iterator thruster)
+{
+    if(thruster->effort < thruster->minThrust)
+    {
+        gzmsg << "GazeboThruster: thruster effort below the minimum: " << thruster->minThrust << endl;
+        gzmsg << "GazeboThruster: using minThrust: " << thruster->minThrust << ", instead. " << endl;
+        thruster->effort = thruster->minThrust;
+    }
+
+    if(thruster->effort > thruster->maxThrust)
+    {
+        gzmsg << "GazeboThruster: incoming thruster effort above the maximum: " << thruster->maxThrust << endl;
+        gzmsg << "GazeboThruster: using maxThrust: " << thruster->maxThrust << ", instead. " << endl;
+        thruster->effort = thruster->maxThrust;
     }
 }
 
