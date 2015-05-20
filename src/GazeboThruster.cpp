@@ -8,18 +8,22 @@ GazeboThruster::GazeboThruster()
 {
 }
 
+
 GazeboThruster::~GazeboThruster()
 {
     node->Fini();
 }
+
 
 void GazeboThruster::Load(physics::ModelPtr _model,sdf::ElementPtr _sdf)
 {
     model = _model;
     gzmsg << "GazeboThruster: loading thrusters from model: " << model->GetName() << endl;
 
-    loadThrusters();
-    checkThrusters();
+    std::vector<Thruster> thrusters = loadThrusters();
+    if( checkThrusters(thrusters));
+        this->thrusters = thrusters;
+
     initComNode();
 
     eventHandler.push_back(
@@ -46,9 +50,10 @@ T GazeboThruster::getParameter(sdf::ElementPtr thrusterElement,
 }
 
 
-void GazeboThruster::loadThrusters()
+std::vector<gazebo_thruster::GazeboThruster::Thruster> GazeboThruster::loadThrusters()
 {
     // Import all thrusters from a model file (sdf)
+    std::vector<Thruster> thrusters;
     sdf::ElementPtr modelSDF = model->GetSDF();
     if (modelSDF->HasElement("plugin"))
     {
@@ -81,29 +86,25 @@ void GazeboThruster::loadThrusters()
             }
         }
     }
+    return thrusters;
 }
 
 
-void GazeboThruster::checkThrusters()
+bool GazeboThruster::checkThrusters(std::vector<Thruster> thrusters)
 {
-    // Get all links and look for thrusters names in their names
-    physics::Link_V links = model->GetLinks();
+    // Look for link names that match thrusters names
     for(vector<Thruster>::iterator thruster = thrusters.begin(); thruster != thrusters.end(); ++thruster)
     {
-        bool thrusterFound = false;
-        for(physics::Link_V::iterator link = links.begin(); link != links.end(); ++link)
-        {
-            if(thruster->name == (*link)->GetName())
-                thrusterFound = true;
-        }
-        if(!thrusterFound)
+        if( !model->GetLink(thruster->name) )
         {
             string msg = "GazeboThruster: no link name match the thruster name: " + thruster->name +
                     " in gazebo model: " + model->GetName();
             gzthrow(msg);
         }
     }
+    return true;
 }
+
 
 void GazeboThruster::initComNode()
 {

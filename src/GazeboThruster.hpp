@@ -30,9 +30,9 @@ namespace gazebo_thruster
     private:
         void updateBegin(gazebo::common::UpdateInfo const& info);
         double thrusterMathModel(double input);
-        void loadThrusters();
+        std::vector<Thruster> loadThrusters();
+        bool checkThrusters( std::vector<Thruster> );
         void initComNode();
-        void checkThrusters();
         void checkThrustLimits(std::vector<Thruster>::iterator thruster);
         double updateEffort(gazebo_thruster::msgs::Thruster thrusterCMD);
 
