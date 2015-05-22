@@ -20,19 +20,31 @@ namespace gazebo_thruster
         typedef const boost::shared_ptr<const gazebo_thruster::msgs::Thrusters> ThrustersMSG;
         void readInput(ThrustersMSG &thrustersMSG);
 
+        struct Thruster{
+            std::string name;
+            double minThrust;
+            double maxThrust;
+            double effort;
+        };
+
     private:
         void updateBegin(gazebo::common::UpdateInfo const& info);
         double thrusterMathModel(double input);
-        void loadLinks();
+        std::vector<Thruster> loadThrusters();
+        bool checkThrusters( std::vector<Thruster> );
         void initComNode();
+        void checkThrustLimits(std::vector<Thruster>::iterator thruster);
+        double updateEffort(gazebo_thruster::msgs::Thruster thrusterCMD);
 
         std::vector<gazebo::event::ConnectionPtr> eventHandler;
         gazebo::transport::NodePtr node;
         gazebo::transport::SubscriberPtr thrusterSubscriber;
         gazebo::physics::ModelPtr model;
 
-        typedef std::map<std::string,double> ThrusterOutput;
-        ThrusterOutput thrusterOutput;
+        template <typename T>
+        T getParameter(sdf::ElementPtr thrusterElement, std::string parameter_name,
+                std::string dimension, T default_value);
+        std::vector<Thruster> thrusters;
     };
     GZ_REGISTER_MODEL_PLUGIN(GazeboThruster)
 } 
