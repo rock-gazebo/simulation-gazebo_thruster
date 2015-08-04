@@ -3,8 +3,7 @@ package gazebo_thruster.msgs;
 message Thruster
 {
     required string     name = 1;
-    optional double     raw = 2;
-    optional double     effort = 3;
+    optional double     effort = 2;
 }
 
 message Thrusters
