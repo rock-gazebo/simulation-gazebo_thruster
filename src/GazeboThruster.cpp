@@ -67,12 +67,12 @@ std::vector<gazebo_thruster::GazeboThruster::Thruster> GazeboThruster::loadThrus
                 sdf::ElementPtr thrusterElement = pluginElement->GetElement("thruster");
                 while(thrusterElement)
                 {
-                    // Check thrusters attributes
+                    // Load thrusters attributes
                     Thruster thruster;
                     thruster.name = thrusterElement->Get<string>("name");
                     gzmsg << "GazeboThruster: thruster name: " << thruster.name << endl;
-                    thruster.minThrust = getParameter<double>(thrusterElement,"min_thrust","N",-100);
-                    thruster.maxThrust = getParameter<double>(thrusterElement,"max_thrust","N",100);
+                    thruster.minThrust = getParameter<double>(thrusterElement,"min_thrust","N",-200);
+                    thruster.maxThrust = getParameter<double>(thrusterElement,"max_thrust","N",200);
                     thruster.effort = 0.0;
                     thrusters.push_back(thruster);
                     thrusterElement = thrusterElement->GetNextElement("thruster");
@@ -118,7 +118,7 @@ void GazeboThruster::initComNode()
 }
 
 
-void GazeboThruster::readInput(ThrustersMSG& thrustersMSG)
+void GazeboThruster::readInput(ThrustersMSG const& thrustersMSG)
 {
     // Read buffer and update the thruster effort
     for(int i = 0; i < thrustersMSG->thrusters_size(); ++i)
@@ -143,15 +143,11 @@ void GazeboThruster::readInput(ThrustersMSG& thrustersMSG)
 
 double GazeboThruster::updateEffort(gazebo_thruster::msgs::Thruster thrusterCMD)
 {
-    double effort;
-
-    if( thrusterCMD.has_raw() )
-        effort = thrusterMathModel( thrusterCMD.raw() );
-
-    if( thrusterCMD.has_effort() )
-        effort = thrusterCMD.effort();
-
-    return effort;
+    if( thrusterCMD.has_effort() ){
+        return thrusterCMD.effort();
+    }else{
+        return 0;
+    }
 }
 
 
@@ -170,14 +166,6 @@ void GazeboThruster::checkThrustLimits(vector<Thruster>::iterator thruster)
         gzmsg << "GazeboThruster: using maxThrust: " << thruster->maxThrust << ", instead. " << endl;
         thruster->effort = thruster->maxThrust;
     }
-}
-
-
-double GazeboThruster::thrusterMathModel(double input)
-{
-    // Linear model
-    double a = 1.0, b = 0.0;
-    return a*( input ) + b;
 }
 
 

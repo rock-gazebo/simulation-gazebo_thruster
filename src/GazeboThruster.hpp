@@ -18,7 +18,7 @@ namespace gazebo_thruster
         virtual void Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf);
 
         typedef const boost::shared_ptr<const gazebo_thruster::msgs::Thrusters> ThrustersMSG;
-        void readInput(ThrustersMSG &thrustersMSG);
+        void readInput(ThrustersMSG const& thrustersMSG);
 
         struct Thruster{
             std::string name;
@@ -29,7 +29,6 @@ namespace gazebo_thruster
 
     private:
         void updateBegin(gazebo::common::UpdateInfo const& info);
-        double thrusterMathModel(double input);
         std::vector<Thruster> loadThrusters();
         bool checkThrusters( std::vector<Thruster> );
         void initComNode();
