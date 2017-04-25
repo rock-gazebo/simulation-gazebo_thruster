@@ -56,38 +56,47 @@ std::vector<gazebo_thruster::GazeboThruster::Thruster> GazeboThruster::loadThrus
     // Import all thrusters from a model file (sdf)
     std::vector<Thruster> thrusters;
     sdf::ElementPtr modelSDF = model->GetSDF();
-    if (modelSDF->HasElement("plugin"))
+
+    sdf::ElementPtr pluginElement = modelSDF->GetElement("plugin");
+    while (pluginElement)
     {
-        sdf::ElementPtr pluginElement = modelSDF->GetElement("plugin");
-        gzmsg << "GazeboThruster: found plugin (filename): " << pluginElement->Get<string>("filename") << endl;
-        gzmsg << "GazeboThruster: found plugin (name): " << pluginElement->Get<string>("name") << endl;
         if(pluginElement->Get<string>("filename") == "libgazebo_thruster.so")
-        {
-            if(pluginElement->HasElement("thruster"))
-            {
-                sdf::ElementPtr thrusterElement = pluginElement->GetElement("thruster");
-                while(thrusterElement)
-                {
-                    // Load thrusters attributes
-                    Thruster thruster;
-                    thruster.name = thrusterElement->Get<string>("name");
-                    gzmsg << "GazeboThruster: thruster name: " << thruster.name << endl;
-                    thruster.minThrust = getParameter<double>(thrusterElement,"min_thrust","N",-200);
-                    thruster.maxThrust = getParameter<double>(thrusterElement,"max_thrust","N",200);
-                    thruster.effort = 0.0;
-                    thrusters.push_back(thruster);
-                    thruster.added_mass_compensated_direction = Vector3d::UnitX;
-                    thruster.added_mass_compensated_position = Vector3d::Zero;
-                    thrusterElement = thrusterElement->GetNextElement("thruster");
-                }
-            }else
-            {
-                string msg = "GazeboThruster: sdf model loads thruster plugin but has no thruster defined.\n";
-                msg += "GazeboThruster: please name the links you want to export as thrusters inside the <plugin> tag: \n";
-                msg += "GazeboThruster: <thruster name='thruster::right'> ";
-                gzthrow(msg);
-            }
-        }
+           break;
+        else
+            pluginElement = pluginElement->GetNextElement("plugin");
+    }
+
+    if (!pluginElement)
+    {
+        string msg = "GazeboThruster: sdf model loaded the thruster plugin, but it cannot be found in the SDF object.\n";
+        msg += "GazeboThruster: expected the thruster plugin filename to be libgazebo_thruster.so\n";
+        gzthrow(msg);
+    }
+
+
+    gzmsg << "GazeboThruster: found plugin (filename): " << pluginElement->Get<string>("filename") << endl;
+    gzmsg << "GazeboThruster: found plugin (name): " << pluginElement->Get<string>("name") << endl;
+
+    sdf::ElementPtr thrusterElement = pluginElement->GetElement("thruster");
+    while(thrusterElement)
+    {
+        // Load thrusters attributes
+        Thruster thruster;
+        thruster.name = thrusterElement->Get<string>("name");
+        gzmsg << "GazeboThruster: thruster name: " << thruster.name << endl;
+        thruster.minThrust = getParameter<double>(thrusterElement,"min_thrust","N",-200);
+        thruster.maxThrust = getParameter<double>(thrusterElement,"max_thrust","N",200);
+        thruster.effort = 0.0;
+        thrusters.push_back(thruster);
+        thrusterElement = thrusterElement->GetNextElement("thruster");
+    }
+
+    if (thrusters.empty())
+    {
+        string msg = "GazeboThruster: sdf model loads thruster plugin but has no thruster defined.\n";
+        msg += "GazeboThruster: please name the links you want to export as thrusters inside the <plugin> tag: \n";
+        msg += "GazeboThruster: <thruster name='thruster::right'> ";
+        gzthrow(msg);
     }
     return thrusters;
 }
