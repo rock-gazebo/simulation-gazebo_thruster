@@ -5,6 +5,7 @@
 #include <gazebo/physics/physics.hh>
 #include <gazebo/transport/transport.hh>
 #include <gazebo/msgs/msgs.hh>
+#include <gazebo_underwater/DataTypes.hpp>
 
 #include "msgs.pb.h"
 
@@ -27,6 +28,7 @@ namespace gazebo_thruster
             double effort;
         };
 
+        gazebo_underwater::Matrix6 intertiaMatrix;
     private:
         void updateBegin(gazebo::common::UpdateInfo const& info);
         std::vector<Thruster> loadThrusters();
