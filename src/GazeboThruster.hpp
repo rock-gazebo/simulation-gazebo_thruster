@@ -19,7 +19,12 @@ namespace gazebo_thruster
         virtual void Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf);
 
         typedef const boost::shared_ptr<const gazebo_thruster::msgs::Thrusters> ThrustersMSG;
+        typedef const boost::shared_ptr<const gazebo_underwater::msgs::Matrix6> Matrix6MSG;
+        typedef const boost::shared_ptr<const gazebo::msgs::Pose> PoseMSG;
+
         void readInput(ThrustersMSG const& thrustersMSG);
+        void readCompensatedMass(Matrix6MSG const& matrix6MSG);
+        void readCoG(PoseMSG const& poseMSG);
 
         struct Thruster{
             std::string name;
@@ -28,7 +33,8 @@ namespace gazebo_thruster
             double effort;
         };
 
-        gazebo_underwater::Matrix6 intertiaMatrix;
+        gazebo_underwater::Matrix6 inertiaMatrix;
+        gazebo::math::Pose cogInertial;
     private:
         void updateBegin(gazebo::common::UpdateInfo const& info);
         std::vector<Thruster> loadThrusters();
@@ -40,6 +46,8 @@ namespace gazebo_thruster
         std::vector<gazebo::event::ConnectionPtr> eventHandler;
         gazebo::transport::NodePtr node;
         gazebo::transport::SubscriberPtr thrusterSubscriber;
+        gazebo::transport::SubscriberPtr compensatedMassSubscriber;
+        gazebo::transport::SubscriberPtr cogSubscriber;
         gazebo::physics::ModelPtr model;
 
         template <typename T>
