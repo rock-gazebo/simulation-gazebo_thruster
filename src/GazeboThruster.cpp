@@ -120,6 +120,11 @@ void GazeboThruster::initComNode()
     cogSubscriber = node->Subscribe("~/" + topicName,&GazeboThruster::readCoG,this);
     gzmsg <<"GazeboThruster: create gazebo topic /gazebo/"+ model->GetWorld()->GetName()
             + "/" + topicName << endl;
+
+    topicName = model->GetName() + "/compensated_mass_matrix";
+    compensatedMassSubscriber = node->Subscribe("~/" + topicName,&GazeboThruster::readCompensatedMass,this);
+    gzmsg <<"GazeboThruster: create gazebo topic /gazebo/"+ model->GetWorld()->GetName()
+            + "/" + topicName << endl;
 }
 
 
@@ -147,13 +152,12 @@ void GazeboThruster::readInput(ThrustersMSG const& thrustersMSG)
 
 void GazeboThruster::readCompensatedMass(Matrix6MSG const& matrix6MSG)
 {
-
+    inertiaMatrix = gazebo_underwater::Matrix6(*matrix6MSG);
 }
 
 void GazeboThruster::readCoG(PoseMSG const& poseMSG)
 {
    cogInertial = gazebo::math::Pose(gazebo::msgs::ConvertIgn(*poseMSG));
-   gzmsg <<"GazeboThruster: readCoG " << cogInertial << endl;
 }
 
 double GazeboThruster::updateEffort(gazebo_thruster::msgs::Thruster thrusterCMD)
