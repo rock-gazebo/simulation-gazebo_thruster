@@ -192,6 +192,7 @@ void GazeboThruster::updateBegin(common::UpdateInfo const& info)
             thruster != thrusters.end(); ++thruster)
     {
         physics::LinkPtr link = model->GetLink( thruster->name );
+        link->AddLinkForce( thruster->effort*gazebo::math::Vector3::UnitX);
         link->AddLinkForce( thruster->effort*thruster->direction, thruster->position );
     }
 }
