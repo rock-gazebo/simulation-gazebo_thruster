@@ -76,8 +76,8 @@ std::vector<gazebo_thruster::GazeboThruster::Thruster> GazeboThruster::loadThrus
                     thruster.maxThrust = getParameter<double>(thrusterElement,"max_thrust","N",200);
                     thruster.effort = 0.0;
                     thrusters.push_back(thruster);
-                    thruster.direction = gazebo::math::Vector3::UnitX;
-                    thruster.position = gazebo::math::Vector3::Zero;
+                    thruster.added_mass_compensated_direction = gazebo::math::Vector3::UnitX;
+                    thruster.added_mass_compensated_position = gazebo::math::Vector3::Zero;
                     thrusterElement = thrusterElement->GetNextElement("thruster");
                 }
             }else
@@ -150,7 +150,7 @@ void GazeboThruster::readInput(ThrustersMSG const& thrustersMSG)
 
 void GazeboThruster::readCompensatedMass(CompMassMSG const& compMassMSG)
 {
-    gazebo_underwater::Matrix6 matrix(compMassMSG->matrix());
+    gazebo_underwater::Matrix6 matrix(compMassMSG->matrix() - gazebo_underwater::Matrix6::Identity());
     gazebo::math::Vector3 cog(gazebo::msgs::ConvertIgn(compMassMSG->cog()));
     if(!compensated_effort)
     {
@@ -193,24 +193,22 @@ void GazeboThruster::updateBegin(common::UpdateInfo const& info)
     {
         physics::LinkPtr link = model->GetLink( thruster->name );
         link->AddLinkForce( thruster->effort*gazebo::math::Vector3::UnitX);
-        link->AddLinkForce( thruster->effort*thruster->direction, thruster->position );
+        link->AddLinkForce( thruster->effort*thruster->added_mass_compensated_direction,
+                thruster->added_mass_compensated_position );
     }
 }
 
 void GazeboThruster::updateCompensatedEffort(gazebo_underwater::Matrix6 const& matrix, gazebo::math::Vector3 const& cog)
 {
-    gazebo_underwater::Vector6 effort;
     for(vector<Thruster>::iterator thruster = thrusters.begin();
             thruster != thrusters.end(); ++thruster)
     {
         physics::LinkPtr link = model->GetLink( thruster->name );
-        effort.top = link->GetRelativePose().rot.RotateVector(gazebo::math::Vector3::UnitX);
-        effort.bottom = (link->GetRelativePose().pos-cog).Cross(effort.top);
-        gzmsg << "GazeboThruster: name: " << thruster->name << ", force: "<< effort.top << ", torque: "<< effort.bottom << endl;
+        gazebo::math::Vector3 force(link->GetRelativePose().rot.RotateVector(gazebo::math::Vector3::UnitX));
+        gazebo_underwater::Vector6 effort( force, (link->GetRelativePose().pos-cog).Cross(force));
         effort = matrix * effort;
-        thruster->direction = link->GetRelativePose().rot.RotateVectorReverse(effort.top);
-        thruster->position = effort.top.Cross(effort.bottom)/(thruster->direction.GetSquaredLength()) + cog - link->GetRelativePose().pos;
-        thruster->position = link->GetRelativePose().rot.RotateVectorReverse(thruster->position);
-        gzmsg << "GazeboThruster: name: " << thruster->name << ", direction: "<< thruster->direction << ", position: "<< thruster->position << endl;
+        thruster->added_mass_compensated_direction = link->GetRelativePose().rot.RotateVectorReverse(effort.top);
+        thruster->added_mass_compensated_position = effort.top.Cross(effort.bottom)/(thruster->added_mass_compensated_direction.GetSquaredLength()) + cog - link->GetRelativePose().pos;
+        thruster->added_mass_compensated_position = link->GetRelativePose().rot.RotateVectorReverse(thruster->added_mass_compensated_position);
     }
 }

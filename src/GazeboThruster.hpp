@@ -29,8 +29,8 @@ namespace gazebo_thruster
             double minThrust;
             double maxThrust;
             double effort;
-            gazebo::math::Vector3 direction;
-            gazebo::math::Vector3 position;
+            gazebo::math::Vector3 added_mass_compensated_direction;
+            gazebo::math::Vector3 added_mass_compensated_position;
         };
         
         bool compensated_effort;
