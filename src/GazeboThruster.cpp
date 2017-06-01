@@ -21,7 +21,6 @@ void GazeboThruster::Load(physics::ModelPtr _model,sdf::ElementPtr _sdf)
     gzmsg << "GazeboThruster: loading thrusters from model: " << model->GetName() << endl;
 
     std::vector<Thruster> thrusters = loadThrusters();
-    compensated_effort = false;
     if( checkThrusters(thrusters));
         this->thrusters = thrusters;
 
@@ -152,10 +151,10 @@ void GazeboThruster::readCompensatedMass(CompMassMSG const& compMassMSG)
 {
     gazebo_underwater::Matrix6 matrix(compMassMSG->matrix() - gazebo_underwater::Matrix6::Identity());
     gazebo::math::Vector3 cog(gazebo::msgs::ConvertIgn(compMassMSG->cog()));
-    if(!compensated_effort)
+    if(mass_matrix != matrix)
     {
         updateCompensatedEffort(matrix, cog);
-        compensated_effort = true;
+        mass_matrix = matrix;
     }
 }
 

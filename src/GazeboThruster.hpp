@@ -33,7 +33,7 @@ namespace gazebo_thruster
             gazebo::math::Vector3 added_mass_compensated_position;
         };
         
-        bool compensated_effort;
+        gazebo_underwater::Matrix6 mass_matrix;
     private:
         void updateBegin(gazebo::common::UpdateInfo const& info);
         std::vector<Thruster> loadThrusters();
