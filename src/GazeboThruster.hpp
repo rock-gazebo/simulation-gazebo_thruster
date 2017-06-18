@@ -5,6 +5,7 @@
 #include <gazebo/physics/physics.hh>
 #include <gazebo/transport/transport.hh>
 #include <gazebo/msgs/msgs.hh>
+#include <gazebo_underwater/DataTypes.hpp>
 
 #include "msgs.pb.h"
 
@@ -18,15 +19,21 @@ namespace gazebo_thruster
         virtual void Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf);
 
         typedef const boost::shared_ptr<const gazebo_thruster::msgs::Thrusters> ThrustersMSG;
+        typedef const boost::shared_ptr<const gazebo_underwater::msgs::CompensatedMass> CompMassMSG;
+
         void readInput(ThrustersMSG const& thrustersMSG);
+        void readCompensatedMass(CompMassMSG const& compMassMSG);
 
         struct Thruster{
             std::string name;
             double minThrust;
             double maxThrust;
             double effort;
+            gazebo::math::Vector3 added_mass_compensated_direction;
+            gazebo::math::Vector3 added_mass_compensated_position;
         };
-
+        
+        gazebo_underwater::Matrix6 mass_matrix;
     private:
         void updateBegin(gazebo::common::UpdateInfo const& info);
         std::vector<Thruster> loadThrusters();
@@ -34,10 +41,12 @@ namespace gazebo_thruster
         void initComNode();
         void checkThrustLimits(std::vector<Thruster>::iterator thruster);
         double updateEffort(gazebo_thruster::msgs::Thruster thrusterCMD);
+        void updateCompensatedEffort(gazebo_underwater::Matrix6 const& matrix, gazebo::math::Vector3 const& cog);
 
         std::vector<gazebo::event::ConnectionPtr> eventHandler;
         gazebo::transport::NodePtr node;
         gazebo::transport::SubscriberPtr thrusterSubscriber;
+        gazebo::transport::SubscriberPtr compensatedMassSubscriber;
         gazebo::physics::ModelPtr model;
 
         template <typename T>

@@ -8,6 +8,7 @@
   <logo>http://</logo>
   <depend package="base/cmake" />
   <depend package="simulation/gazebo" />
+  <depend package="simulation/gazebo_underwater" />
   <depend package="libprotobuf" />
   <depend package="protobuf-compiler" />
   <depend package="control/sdformat" />
