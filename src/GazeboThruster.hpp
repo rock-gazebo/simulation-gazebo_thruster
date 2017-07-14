@@ -29,8 +29,8 @@ namespace gazebo_thruster
             double minThrust;
             double maxThrust;
             double effort;
-            gazebo::math::Vector3 added_mass_compensated_direction;
-            gazebo::math::Vector3 added_mass_compensated_position;
+            ignition::math::Vector3d added_mass_compensated_direction;
+            ignition::math::Vector3d added_mass_compensated_position;
         };
         
         gazebo_underwater::Matrix6 mass_matrix;
@@ -41,7 +41,7 @@ namespace gazebo_thruster
         void initComNode();
         void checkThrustLimits(std::vector<Thruster>::iterator thruster);
         double updateEffort(gazebo_thruster::msgs::Thruster thrusterCMD);
-        void updateCompensatedEffort(gazebo_underwater::Matrix6 const& matrix, gazebo::math::Vector3 const& cog);
+        void updateCompensatedEffort(gazebo_underwater::Matrix6 const& matrix, ignition::math::Vector3d const& cog);
 
         std::vector<gazebo::event::ConnectionPtr> eventHandler;
         gazebo::transport::NodePtr node;

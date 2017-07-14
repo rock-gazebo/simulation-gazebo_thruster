@@ -3,6 +3,7 @@
 using namespace std;
 using namespace gazebo;
 using namespace gazebo_thruster;
+using namespace ignition::math;
 
 GazeboThruster::GazeboThruster()
 {
@@ -55,38 +56,47 @@ std::vector<gazebo_thruster::GazeboThruster::Thruster> GazeboThruster::loadThrus
     // Import all thrusters from a model file (sdf)
     std::vector<Thruster> thrusters;
     sdf::ElementPtr modelSDF = model->GetSDF();
-    if (modelSDF->HasElement("plugin"))
+
+    sdf::ElementPtr pluginElement = modelSDF->GetElement("plugin");
+    while (pluginElement)
     {
-        sdf::ElementPtr pluginElement = modelSDF->GetElement("plugin");
-        gzmsg << "GazeboThruster: found plugin (filename): " << pluginElement->Get<string>("filename") << endl;
-        gzmsg << "GazeboThruster: found plugin (name): " << pluginElement->Get<string>("name") << endl;
         if(pluginElement->Get<string>("filename") == "libgazebo_thruster.so")
-        {
-            if(pluginElement->HasElement("thruster"))
-            {
-                sdf::ElementPtr thrusterElement = pluginElement->GetElement("thruster");
-                while(thrusterElement)
-                {
-                    // Load thrusters attributes
-                    Thruster thruster;
-                    thruster.name = thrusterElement->Get<string>("name");
-                    gzmsg << "GazeboThruster: thruster name: " << thruster.name << endl;
-                    thruster.minThrust = getParameter<double>(thrusterElement,"min_thrust","N",-200);
-                    thruster.maxThrust = getParameter<double>(thrusterElement,"max_thrust","N",200);
-                    thruster.effort = 0.0;
-                    thrusters.push_back(thruster);
-                    thruster.added_mass_compensated_direction = gazebo::math::Vector3::UnitX;
-                    thruster.added_mass_compensated_position = gazebo::math::Vector3::Zero;
-                    thrusterElement = thrusterElement->GetNextElement("thruster");
-                }
-            }else
-            {
-                string msg = "GazeboThruster: sdf model loads thruster plugin but has no thruster defined.\n";
-                msg += "GazeboThruster: please name the links you want to export as thrusters inside the <plugin> tag: \n";
-                msg += "GazeboThruster: <thruster name='thruster::right'> ";
-                gzthrow(msg);
-            }
-        }
+           break;
+        else
+            pluginElement = pluginElement->GetNextElement("plugin");
+    }
+
+    if (!pluginElement)
+    {
+        string msg = "GazeboThruster: sdf model loaded the thruster plugin, but it cannot be found in the SDF object.\n";
+        msg += "GazeboThruster: expected the thruster plugin filename to be libgazebo_thruster.so\n";
+        gzthrow(msg);
+    }
+
+
+    gzmsg << "GazeboThruster: found plugin (filename): " << pluginElement->Get<string>("filename") << endl;
+    gzmsg << "GazeboThruster: found plugin (name): " << pluginElement->Get<string>("name") << endl;
+
+    sdf::ElementPtr thrusterElement = pluginElement->GetElement("thruster");
+    while(thrusterElement)
+    {
+        // Load thrusters attributes
+        Thruster thruster;
+        thruster.name = thrusterElement->Get<string>("name");
+        gzmsg << "GazeboThruster: thruster name: " << thruster.name << endl;
+        thruster.minThrust = getParameter<double>(thrusterElement,"min_thrust","N",-200);
+        thruster.maxThrust = getParameter<double>(thrusterElement,"max_thrust","N",200);
+        thruster.effort = 0.0;
+        thrusters.push_back(thruster);
+        thrusterElement = thrusterElement->GetNextElement("thruster");
+    }
+
+    if (thrusters.empty())
+    {
+        string msg = "GazeboThruster: sdf model loads thruster plugin but has no thruster defined.\n";
+        msg += "GazeboThruster: please name the links you want to export as thrusters inside the <plugin> tag: \n";
+        msg += "GazeboThruster: <thruster name='thruster::right'> ";
+        gzthrow(msg);
     }
     return thrusters;
 }
@@ -150,7 +160,7 @@ void GazeboThruster::readInput(ThrustersMSG const& thrustersMSG)
 void GazeboThruster::readCompensatedMass(CompMassMSG const& compMassMSG)
 {
     gazebo_underwater::Matrix6 matrix(compMassMSG->matrix() - gazebo_underwater::Matrix6::Identity());
-    gazebo::math::Vector3 cog(gazebo::msgs::ConvertIgn(compMassMSG->cog()));
+    Vector3d cog(gazebo::msgs::ConvertIgn(compMassMSG->cog()));
     if(mass_matrix != matrix)
     {
         updateCompensatedEffort(matrix, cog);
@@ -191,23 +201,23 @@ void GazeboThruster::updateBegin(common::UpdateInfo const& info)
             thruster != thrusters.end(); ++thruster)
     {
         physics::LinkPtr link = model->GetLink( thruster->name );
-        link->AddLinkForce( thruster->effort*gazebo::math::Vector3::UnitX);
+        link->AddLinkForce( thruster->effort*Vector3d::UnitX);
         link->AddLinkForce( thruster->effort*thruster->added_mass_compensated_direction,
                 thruster->added_mass_compensated_position );
     }
 }
 
-void GazeboThruster::updateCompensatedEffort(gazebo_underwater::Matrix6 const& matrix, gazebo::math::Vector3 const& cog)
+void GazeboThruster::updateCompensatedEffort(gazebo_underwater::Matrix6 const& matrix, Vector3d const& cog)
 {
     for(vector<Thruster>::iterator thruster = thrusters.begin();
             thruster != thrusters.end(); ++thruster)
     {
         physics::LinkPtr link = model->GetLink( thruster->name );
-        gazebo::math::Vector3 force(link->GetRelativePose().rot.RotateVector(gazebo::math::Vector3::UnitX));
-        gazebo_underwater::Vector6 effort( force, (link->GetRelativePose().pos-cog).Cross(force));
+        Vector3d force(GzGetIgn((*link), RelativePose, ()).Rot().RotateVector(Vector3d::UnitX));
+        gazebo_underwater::Vector6 effort( force, (GzGetIgn((*link), RelativePose, ()).Pos()-cog).Cross(force));
         effort = matrix * effort;
-        thruster->added_mass_compensated_direction = link->GetRelativePose().rot.RotateVectorReverse(effort.top);
-        thruster->added_mass_compensated_position = effort.top.Cross(effort.bottom)/(thruster->added_mass_compensated_direction.GetSquaredLength()) + cog - link->GetRelativePose().pos;
-        thruster->added_mass_compensated_position = link->GetRelativePose().rot.RotateVectorReverse(thruster->added_mass_compensated_position);
+        thruster->added_mass_compensated_direction = GzGetIgn((*link), RelativePose, ()).Rot().RotateVectorReverse(effort.top);
+        thruster->added_mass_compensated_position = effort.top.Cross(effort.bottom)/(gazebo::math::Vector3(thruster->added_mass_compensated_direction).GetSquaredLength()) + cog - GzGetIgn((*link), RelativePose, ()).Pos();
+        thruster->added_mass_compensated_position = GzGetIgn((*link), RelativePose, ()).Rot().RotateVectorReverse(thruster->added_mass_compensated_position);
     }
 }
