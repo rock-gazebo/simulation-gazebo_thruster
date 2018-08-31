@@ -22,8 +22,8 @@ void GazeboThruster::Load(physics::ModelPtr _model,sdf::ElementPtr _sdf)
     gzmsg << "GazeboThruster: loading thrusters from model: " << model->GetName() << endl;
 
     std::vector<Thruster> thrusters = loadThrusters();
-    if( checkThrusters(thrusters));
-        this->thrusters = thrusters;
+    checkThrusters(thrusters);
+    this->thrusters = thrusters;
 
     initComNode();
 
@@ -102,7 +102,7 @@ std::vector<gazebo_thruster::GazeboThruster::Thruster> GazeboThruster::loadThrus
 }
 
 
-bool GazeboThruster::checkThrusters(std::vector<Thruster> thrusters)
+void GazeboThruster::checkThrusters(std::vector<Thruster> thrusters)
 {
     // Look for link names that match thrusters names
     for(vector<Thruster>::iterator thruster = thrusters.begin(); thruster != thrusters.end(); ++thruster)
@@ -114,7 +114,6 @@ bool GazeboThruster::checkThrusters(std::vector<Thruster> thrusters)
             gzthrow(msg);
         }
     }
-    return true;
 }
 
 
@@ -125,12 +124,12 @@ void GazeboThruster::initComNode()
     node->Init();
     string topicName = model->GetName() + "/thrusters";
     thrusterSubscriber = node->Subscribe("~/" + topicName,&GazeboThruster::readInput,this);
-    gzmsg <<"GazeboThruster: create gazebo topic /gazebo/"+ model->GetWorld()->GetName()
+    gzmsg <<"GazeboThruster: create gazebo topic /gazebo/"+ GzGet((*model->GetWorld()), Name, ())
             + "/" + topicName << endl;
 
     topicName = model->GetName() + "/compensated_mass";
     compensatedMassSubscriber = node->Subscribe("~/" + topicName,&GazeboThruster::readCompensatedMass,this,true);
-    gzmsg <<"GazeboThruster: create gazebo topic /gazebo/"+ model->GetWorld()->GetName()
+    gzmsg <<"GazeboThruster: create gazebo topic /gazebo/"+ GzGet((*model->GetWorld()), Name, ())
             + "/" + topicName << endl;
 }
 
@@ -217,7 +216,7 @@ void GazeboThruster::updateCompensatedEffort(gazebo_underwater::Matrix6 const& m
         gazebo_underwater::Vector6 effort( force, (GzGetIgn((*link), RelativePose, ()).Pos()-cog).Cross(force));
         effort = matrix * effort;
         thruster->added_mass_compensated_direction = GzGetIgn((*link), RelativePose, ()).Rot().RotateVectorReverse(effort.top);
-        thruster->added_mass_compensated_position = effort.top.Cross(effort.bottom)/(gazebo::math::Vector3(thruster->added_mass_compensated_direction).GetSquaredLength()) + cog - GzGetIgn((*link), RelativePose, ()).Pos();
+        thruster->added_mass_compensated_position = effort.top.Cross(effort.bottom)/(thruster->added_mass_compensated_direction.SquaredLength()) + cog - GzGetIgn((*link), RelativePose, ()).Pos();
         thruster->added_mass_compensated_position = GzGetIgn((*link), RelativePose, ()).Rot().RotateVectorReverse(thruster->added_mass_compensated_position);
     }
 }
