@@ -22,8 +22,8 @@ void GazeboThruster::Load(physics::ModelPtr _model,sdf::ElementPtr _sdf)
     gzmsg << "GazeboThruster: loading thrusters from model: " << model->GetName() << endl;
 
     std::vector<Thruster> thrusters = loadThrusters();
-    if( checkThrusters(thrusters));
-        this->thrusters = thrusters;
+    checkThrusters(thrusters);
+    this->thrusters = thrusters;
 
     initComNode();
 
@@ -102,7 +102,7 @@ std::vector<gazebo_thruster::GazeboThruster::Thruster> GazeboThruster::loadThrus
 }
 
 
-bool GazeboThruster::checkThrusters(std::vector<Thruster> thrusters)
+void GazeboThruster::checkThrusters(std::vector<Thruster> thrusters)
 {
     // Look for link names that match thrusters names
     for(vector<Thruster>::iterator thruster = thrusters.begin(); thruster != thrusters.end(); ++thruster)
@@ -114,7 +114,6 @@ bool GazeboThruster::checkThrusters(std::vector<Thruster> thrusters)
             gzthrow(msg);
         }
     }
-    return true;
 }
 
 

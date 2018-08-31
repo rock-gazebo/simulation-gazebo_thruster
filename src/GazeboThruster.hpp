@@ -37,7 +37,7 @@ namespace gazebo_thruster
     private:
         void updateBegin(gazebo::common::UpdateInfo const& info);
         std::vector<Thruster> loadThrusters();
-        bool checkThrusters( std::vector<Thruster> );
+        void checkThrusters( std::vector<Thruster> );
         void initComNode();
         void checkThrustLimits(std::vector<Thruster>::iterator thruster);
         double updateEffort(gazebo_thruster::msgs::Thruster thrusterCMD);
