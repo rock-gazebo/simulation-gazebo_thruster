@@ -5,8 +5,8 @@ protobuf_generate_cpp(msgs_SRCS msgs_HDR msgs.proto)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 rock_library(gazebo_thruster
-    SOURCES GazeboThruster.cpp ${msgs_SRCS}
-    HEADERS GazeboThruster.hpp
+    SOURCES GazeboThruster.cpp Actuator.cpp Utilities.cpp ${msgs_SRCS}
+    HEADERS GazeboThruster.hpp Actuator.hpp Utilities.hpp
     DEPS_PLAIN Boost
     DEPS_PKGCONFIG gazebo sdformat protobuf gazebo_underwater_msgs)
 
